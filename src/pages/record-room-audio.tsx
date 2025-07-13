@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button';
 
 export function RecordRoomAudio() {
   const params = useParams<{ roomId: string }>();
+
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout>(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const isRecordedSupported =
     !!navigator.mediaDevices &&
@@ -21,6 +24,10 @@ export function RecordRoomAudio() {
     setIsRecording(false);
     if (recorderRef.current && recorderRef.current.state !== 'inactive') {
       recorderRef.current.stop();
+    }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
   }
 
@@ -42,6 +49,29 @@ export function RecordRoomAudio() {
     console.log(result);
   }
 
+  function createRecorder(audio: MediaStream) {
+    recorderRef.current = new MediaRecorder(audio, {
+      mimeType: 'audio/webm',
+      audioBitsPerSecond: 64_000,
+    });
+
+    recorderRef.current.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        uploadAudio(event.data);
+      }
+    };
+
+    recorderRef.current.onstart = () => {
+      console.log('Gravacao iniciada');
+    };
+
+    recorderRef.current.onstop = () => {
+      console.log('Gravacao encerrada');
+    };
+
+    recorderRef.current.start();
+  }
+
   async function startRecording() {
     if (isRecordedSupported !== true) {
       alert('Seu navegador nao suporta gravação');
@@ -50,38 +80,21 @@ export function RecordRoomAudio() {
 
     setIsRecording(true);
 
-    try {
-      const audio = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44_100,
-        },
-      });
+    const audio = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44_100,
+      },
+    });
 
-      recorderRef.current = new MediaRecorder(audio, {
-        mimeType: 'audio/webm',
-        audioBitsPerSecond: 64_000,
-      });
+    createRecorder(audio);
 
-      recorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          uploadAudio(event.data);
-        }
-      };
+    intervalRef.current = setInterval(() => {
+      recorderRef.current?.stop();
 
-      recorderRef.current.onstart = () => {
-        console.log('Gravacao iniciada');
-      };
-
-      recorderRef.current.onstop = () => {
-        console.log('Gravacao encerrada');
-      };
-
-      recorderRef.current.start();
-    } catch (error) {
-      console.log(error);
-    }
+      createRecorder(audio);
+    }, 5000);
   }
 
   return (
