@@ -9,7 +9,7 @@ export function useRoomQuestions(roomId: string) {
         `http://localhost:3333/rooms/${roomId}/questions`
       );
 
-      const result: GetRoomQuestions = await response.json();
+      const result: GetRoomQuestions[] = await response.json();
 
       return result;
     },

@@ -12,12 +12,13 @@ export function QuestionList(props: { roomId: string }) {
         </h2>
       </div>
 
-      {data?.questions?.map((question) => {
+      {data?.map((question) => {
         return (
           <QuestionItem
             key={question.id}
             question={{
               id: question.id,
+              answer: question.answer,
               question: question.question,
               createdAt: question.createdAt,
             }}

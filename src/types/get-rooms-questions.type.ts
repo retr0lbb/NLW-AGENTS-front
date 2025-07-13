@@ -1,8 +1,7 @@
 export interface GetRoomQuestions {
-  questions: {
-    id: string;
-    question: string;
-    answer: string | null;
-    createdAt: string;
-  }[];
+  id: string;
+  question: string;
+  answer: string | null;
+  createdAt: string;
+  isGeneratingAnswer?: boolean;
 }
